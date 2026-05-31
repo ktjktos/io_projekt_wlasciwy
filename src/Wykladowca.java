@@ -20,6 +20,7 @@ public class Wykladowca extends Uzytkownik {
 
 	public Wykladowca(String login, String haslo) {
 		super(login, haslo);
+		this.kursy = new ArrayList<>();
 	}
 
 	public List<Kurs> getKursy() {

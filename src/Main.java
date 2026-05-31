@@ -3,15 +3,15 @@ import java.util.Scanner;
 import java.time.format.DateTimeParseException;
 
 public void main(String[] args) {
-    SystemZarzadzania system = new SystemZarzadzania();
-    BazaLogowan baza = new BazaLogowan("test123");
+    BazaLogowan baza = new BazaLogowan("bazaDanych.csv");
+    SystemZarzadzania system = new SystemZarzadzania(baza);
 
     Scanner scanner = new Scanner(System.in);
     Optional<Uzytkownik> user = Optional.empty();
     short proby=0;
     while (user.isEmpty()) {
         if (proby>=3){
-            System.out.println("Wykorzystano 3 proby logowania.");
+            System.out.println("Wykorzystano 3 proby logowania - zamkniecie systemu");
             return;
         }
         System.out.println("Wpisz login oraz haslo");
@@ -65,7 +65,7 @@ public void main(String[] args) {
             System.out.println("--- ZALOGOWANO JAKO WYKLADOWCA ---");
             while(user.isPresent()){
                 System.out.println("1 Utworz kurs");
-                System.out.println("2 Wyswietl liste moich kursow");
+                System.out.println("2 Wyswietl liste moich kursow");//TODO tutaj problem jak nie ma + opcja powrotu (w student to samo)
                 System.out.println("3 Wyloguj");
 
                 int wybor = scanner.nextInt();

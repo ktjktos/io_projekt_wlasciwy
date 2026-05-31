@@ -18,6 +18,7 @@ public class Student extends Uzytkownik {
 
 	public Student(String login, String haslo) {
 		super(login, haslo);
+		this.kursy = new ArrayList<>();
 	}
 
 	public List<Kurs> getKursy() {

@@ -19,9 +19,11 @@ public class SystemZarzadzania {
 	private Kurs obecnyKurs;
 	private Uzytkownik zalogowanyUzytkownik;
 	private BazaLogowan bazaLogowan;
-	public void SystemZarzadzania() {
+
+	public SystemZarzadzania(BazaLogowan bazaLogowan) {
 		this.kursy = new ArrayList<>();
 		this.uzytkownicy = new ArrayList<>();
+		this.bazaLogowan = bazaLogowan;
 	}
 
 
