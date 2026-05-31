@@ -26,4 +26,8 @@ public class Uzytkownik {
 	public boolean zmienHaslo(String login, String haslo, String noweHaslo) {
 	
 	}
+
+    public String getLogin() {
+        return login;
+    }
 }

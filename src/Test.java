@@ -78,6 +78,14 @@ public class Test {
 		this.widocznosc = !this.widocznosc;
 	}
 
+	public void addRozwiazanie(String login, String rozwiazanie) {
+		this.rozwiazania.put(login,rozwiazanie);
+	}
+
+	public void addOcena(String login, Float ocena) {
+		this.oceny.put(login,ocena);
+	}
+
 	public String getRozwiazania() {
 		if (this.rozwiazania == null || this.rozwiazania.isEmpty()) {
 			return "Brak rozwiazan";

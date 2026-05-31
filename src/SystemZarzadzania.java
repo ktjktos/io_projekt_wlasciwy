@@ -17,53 +17,209 @@ public class SystemZarzadzania {
 	private ArrayList<Kurs> kursy;
 	private ArrayList<Uzytkownik> uzytkownicy;
 	private Kurs obecnyKurs;
+	private Uzytkownik zalogowanyUzytkownik;
 	private BazaLogowan bazaLogowan;
 	public void SystemZarzadzania() {
 		this.kursy = new ArrayList<>();
 		this.uzytkownicy = new ArrayList<>();
 	}
-	
-	public void zmienHasloDoKursu() {
 
-	}
-	
-	public void dodajMaterialy(String plik, String tytul) {
-		this.obecnyKurs.dodajMaterialy(plik,tytul);
-	}
-	
-	public void usunMaterialy(String tytul) {
-		this.obecnyKurs.usunMaterialy(tytul);
-	}
-	
-	public void wyswietlMaterialy() {
-		this.obecnyKurs.wyswietlMaterialy();
-	}
-	
-	public void dodajTest(String plik, String tytul, LocalDate datakonca) {
-		this.obecnyKurs.dodajTest(plik,tytul,datakonca);
-	}
-	
-	public void ocenTest(String nazwa, String login, Float ocena) {
-		this.obecnyKurs.ocenTest(nazwa,login,ocena);
-	}
-	
-	public void wyswietlTesty() {
-		this.obecnyKurs.wyswietlTesty();
-	}
-	
-	public void zmienWidocznoscKursu() {
-		this.obecnyKurs.zmienWidocznoscKursu();
-	}
-	
-	public void setSylabus(String plik) {
-		this.obecnyKurs.setSylabus(plik);
-	}
-	public void wyswietlKurs() {
-		//wyswietl wszystko
-	}
-	public void zmienKurs(String id) {
-		for (Kurs k: kursy) {
-			if (k.getId().equals(id)) this.obecnyKurs = k;
+
+
+	// ADMIN
+
+
+
+	public boolean zarejestrujUzytkownika(String login, String haslo, int typ) {
+		if (!(zalogowanyUzytkownik instanceof Admin)) {
+			System.out.println("Blad: Tylko administrator moze rejestrowac uzytkownikow.");
+			return false;
 		}
+
+		boolean zapisanyDoPliku = bazaLogowan.zarejestrujUzytkownika(login, haslo, typ);
+
+		if (zapisanyDoPliku) {
+			Uzytkownik nowyUzytkownik;
+			switch (typ) {
+				case 1: nowyUzytkownik = new Wykladowca(login, haslo); break;
+				case 2: nowyUzytkownik = new Student(login, haslo); break;
+				default: nowyUzytkownik = new Admin(login, haslo); break;
+			}
+			uzytkownicy.add(nowyUzytkownik);
+			return true;
+		}
+		return false;
+	}
+
+	public boolean usunUzytkownika(String login) {
+		if (!(zalogowanyUzytkownik instanceof Admin)) {
+			System.out.println("Blad: Brak uprawnien administratora.");
+			return false;
+		}
+
+		boolean usunietyZPliku = bazaLogowan.usunUzytkownika(login);
+
+		if (usunietyZPliku) {
+			uzytkownicy.removeIf(u -> u.getLogin().equals(login));
+			return true;
+		}
+		return false;
+	}
+
+
+
+	//WYKLADOWCA
+
+
+
+	public void utworzKurs(String nazwa, String haslo) {
+		if (!(zalogowanyUzytkownik instanceof Wykladowca)) {
+			System.out.println("Blad: Ta akcja wymaga konta wykladowcy.");
+			return;
+		}
+
+		Wykladowca wykladowca = (Wykladowca) zalogowanyUzytkownik;
+		Kurs nowyKurs = new Kurs(nazwa, haslo);
+
+		this.kursy.add(nowyKurs);
+		wykladowca.getKursy().add(nowyKurs);
+		System.out.println("Kurs " + nazwa + " zostal pomyslnie utworzony.");
+	}
+
+	public void zmienSylabus(String link) {
+		if (zalogowanyUzytkownik instanceof Wykladowca && obecnyKurs != null) {
+			obecnyKurs.setSylabus(link);
+			System.out.println("Sylabus zostal zaktualizowany.");
+		} else {
+			System.out.println("Blad: Musisz być wykladowcą i wybrac kurs.");
+		}
+	}
+
+	public void dodajMaterialy(String plik, String tytul) {
+		if (zalogowanyUzytkownik instanceof Wykladowca && obecnyKurs != null) {
+			Material nowyMaterial = new Material(plik, tytul);
+			obecnyKurs.getMaterialy().add(nowyMaterial);
+			System.out.println("Dodano material: " + tytul);
+		}
+	}
+
+	public void usunMaterialyPlik(String plik) {
+		if (zalogowanyUzytkownik instanceof Wykladowca && obecnyKurs != null) {
+			boolean usunieto = obecnyKurs.getMaterialy().removeIf(m -> m.getPlik().equals(plik));
+			if (usunieto) System.out.println("Usunieto plik: " + plik);
+		}
+	}
+
+	public void dodajTest(String plik, String tytul, LocalDate datakonca) {
+		if (zalogowanyUzytkownik instanceof Wykladowca && obecnyKurs != null) {
+			Test nowyTest = new Test(plik, tytul, datakonca);
+			obecnyKurs.getTesty().add(nowyTest);
+			System.out.println("Dodano nowy test: " + tytul);
+		}
+	}
+
+	public void sprawdzOceny() {
+		if (zalogowanyUzytkownik instanceof Wykladowca && obecnyKurs != null) {
+			System.out.println("Oceny dla kursu: " + obecnyKurs.getTytul());
+			for (Test test : obecnyKurs.getTesty()) {
+				System.out.println("Test: " + test.getTytul() + " -> " + test.getOceny());
+			}
+		}
+	}
+
+
+
+	//STUDENT
+
+
+
+	public void dolaczDoKursu(int id) {
+		if (!(zalogowanyUzytkownik instanceof Student)) return;
+
+		Student student = (Student) zalogowanyUzytkownik;
+		Kurs wybrany = kursy.stream().filter(k -> k.getId() == id).findFirst().orElse(null);
+
+		if (wybrany != null) {
+			student.getKursy().add(wybrany);
+			wybrany.getUzytkownicy().add(student);
+			System.out.println("Dolaczono do kursu: " + wybrany.getTytul());
+		}
+	}
+
+	public void wybierzObecnyKurs(int id) {
+		if (!(zalogowanyUzytkownik instanceof Student)) return;
+
+		Student student = (Student) zalogowanyUzytkownik;
+		Kurs wybrany = student.getKursy().stream().filter(k -> k.getId() == id).findFirst().orElse(null);
+
+		if (wybrany != null) {
+			this.obecnyKurs = wybrany;
+			System.out.println("Aktywny kurs ustawiony na: " + obecnyKurs.getTytul());
+		} else {
+			System.out.println("Nie masz dostepu do tego kursu.");
+		}
+	}
+
+	public void wyslijRozwiazanieDoTestu(String tytulTestu, String odp) {
+		if (zalogowanyUzytkownik instanceof Student && obecnyKurs != null) {
+			Test test = obecnyKurs.getTesty().stream().filter(t -> t.getTytul().equals(tytulTestu)).findFirst().orElse(null);
+			if (test != null) {
+				test.addRozwiazanie(zalogowanyUzytkownik.getLogin(), odp);
+				System.out.println("Rozwiazanie testu zostalo wyslane.");
+			}
+		}
+	}
+
+	public void sprawdzOceneTestu(String tytul) {
+		if (zalogowanyUzytkownik instanceof Student && obecnyKurs != null) {
+			Test test = obecnyKurs.getTesty().stream().filter(t -> t.getTytul().equals(tytul)).findFirst().orElse(null);
+			if (test != null) {
+				Float ocena = test.getOcena(zalogowanyUzytkownik.getLogin());
+				System.out.println("Twoja ocena z " + tytul + " to: " + (ocena != null ? ocena : "Brak oceny"));
+			}
+		}
+	}
+
+
+
+	//WYKLADOWCA I STUDENT
+
+
+
+	public void sprawdzMaterialy() {
+		if (obecnyKurs == null) {
+			System.out.println("Wybierz najpierw kurs!");
+			return;
+		}
+		System.out.println("Materialy dla kursu " + obecnyKurs.getTytul() + ":");
+		for (Material m : obecnyKurs.getMaterialy()) {
+			if (m.getWidocznosc() || zalogowanyUzytkownik instanceof Wykladowca) {
+				System.out.println("- " + m.getTytul() + " (Plik: " + m.getPlik() + ")");
+			}
+		}
+	}
+
+	public void sprawdzTesty() {
+		if (obecnyKurs == null) return;
+		System.out.println("Testy w kursie:");
+		for (Test t : obecnyKurs.getTesty()) {
+			System.out.println("- " + t.getTytul() + " (Termin do: " + t.getDataKonca() + ")");
+		}
+	}
+
+	public void sprawdzSyllabus() {
+		if (obecnyKurs != null) {
+			System.out.println("Syllabus kursu: " + obecnyKurs.getSylabus());
+		}
+	}
+
+
+
+	// SYSTEMOWE
+
+
+
+	public void setZalogowanyUzytkownik(Uzytkownik uzytkownik) {
+		zalogowanyUzytkownik = uzytkownik;
 	}
 }

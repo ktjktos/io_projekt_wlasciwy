@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Kurs {
-	private String id;
+	private static int counter = 0;
+
+	private int id;
 	private String tytul;
 	private String haslo;
 	private ArrayList<Uzytkownik> uzytkownicy;
@@ -28,11 +30,18 @@ public class Kurs {
 	private ArrayList<Test> testy;
 	private String sylabus;
 	private boolean widocznosc;
-	public Kurs(String id, String tytul, String haslo) {
-		this.id = id;
+
+	public Kurs(String tytul, String haslo) {
+
+		this.id = counter;
 		this.tytul = tytul;
 		this.haslo = haslo;
 		this.widocznosc = false;
+
+		this.uzytkownicy = new ArrayList<>();
+		this.materialy = new ArrayList<>();
+		this.testy = new ArrayList<>();
+		counter++;
 	}
 	
 	public void zmienHaslo(String haslo) {
@@ -123,7 +132,27 @@ public class Kurs {
 		this.sylabus = plik;
 	}
 
-	public String getId() {
-		return this.id;
+	public List<Material> getMaterialy() {
+		return materialy;
+	}
+
+	public List<Test> getTesty() {
+		return testy;
+	}
+
+	public String getTytul() {
+		return tytul;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public List<Uzytkownik>  getUzytkownicy() {
+		return uzytkownicy;
+	}
+
+	public String getSylabus() {
+		return sylabus;
 	}
 }

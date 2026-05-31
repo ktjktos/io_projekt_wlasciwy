@@ -12,6 +12,8 @@
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
+
 
 public class Wykladowca extends Uzytkownik {
 	private ArrayList<Kurs> kursy;
@@ -19,36 +21,8 @@ public class Wykladowca extends Uzytkownik {
 	public Wykladowca(String login) {
 		super(login);
 	}
-	
-	public void utworzKurs(String nazwa, String haslo) {
-	
-	}
-	
-	public void zmienSylabus(String link) {
-	
-	}
-	
-	public void dodajMaterialy(String plik, String tytul) {
-	
-	}
-	
-	public void usunMaterialy(String plik) {
-	
-	}
-	
-	public void sprawdzMaterialy() {
-	
-	}
-	
-	public void dodajTest(String plik, String tytul, LocalDate datakonca) {
-	
-	}
-	
-	public void sprawdzOceny() {
-	
-	}
-	
-	public void sprawdzSylabus() {
-	
+
+	public List<Kurs> getKursy() {
+		return kursy;
 	}
 }

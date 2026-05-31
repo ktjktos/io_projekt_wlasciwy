@@ -11,6 +11,7 @@
 
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Student extends Uzytkownik {
 	private ArrayList<Kurs> kursy;
@@ -18,32 +19,8 @@ public class Student extends Uzytkownik {
 	public Student(String login) {
 		super(login);
 	}
-	
-	public void wybierzObecnyKurs(int id) {
-	
-	}
-	
-	public void dolaczDoKursu(int id) {
-	
-	}
-	
-	public void wyslijRozwiazanieDoTestu(String odp) {
-	
-	}
-	
-	public void sprawdzOceneTestu(String tytul) {
-	
-	}
-	
-	public void sprawdzMaterialy() {
-	
-	}
-	
-	public void sprawdzTesty() {
-	
-	}
-	
-	public void sprawdzSylabus() {
-	
+
+	public List<Kurs> getKursy() {
+		return kursy;
 	}
 }
