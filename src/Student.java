@@ -16,8 +16,8 @@ import java.util.List;
 public class Student extends Uzytkownik {
 	private ArrayList<Kurs> kursy;
 
-	public Student(String login) {
-		super(login);
+	public Student(String login, String haslo) {
+		super(login, haslo);
 	}
 
 	public List<Kurs> getKursy() {

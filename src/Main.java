@@ -1,12 +1,10 @@
 import java.util.Optional;
 import java.util.Scanner;
+import java.time.format.DateTimeParseException;
 
 public void main(String[] args) {
     SystemZarzadzania system = new SystemZarzadzania();
-    Admin admin = new Admin("GOD"); // raczej do zmiany xd
     BazaLogowan baza = new BazaLogowan("test123");
-    admin.zarejestrujUzytkownika("olafbog","lubieplacki",0);
-    admin.zarejestrujUzytkownika("olafbog2","lubieuczyc",1);
 
     Scanner scanner = new Scanner(System.in);
     Optional<Uzytkownik> user = Optional.empty();
@@ -16,7 +14,7 @@ public void main(String[] args) {
             System.out.println("Wykorzystano 3 proby logowania.");
             return;
         }
-        System.out.println("Wpisz login oraz haslo"); // najpierw patrz login czy istnieje potem haslo
+        System.out.println("Wpisz login oraz haslo");
         String login,haslo;
         login = scanner.nextLine().replace(" ", "");
         haslo = scanner.nextLine().replace(" ", "");
@@ -217,8 +215,15 @@ public void main(String[] args) {
                     }
                     case 2 -> {
                         System.out.println("~~~lista kursow~~~");
+                        ArrayList<Kurs> temp = system.getKursy();
+                        for (Kurs k : temp) {
+                            if (!s.getKursy().contains(k)) {
+                                System.out.println("ID: "+k.getId()+" Tytul: "+k.getTytul());
+                            }
+                        }
                         System.out.println("Podaj tytul i haslo aby dolaczyc");
-                        system.dolaczDoKursu();
+                        int idDoDolaczenia = scanner.nextInt();
+                        system.dolaczDoKursu(idDoDolaczenia);
                     }
                     case 3 -> {
                         user = Optional.empty();

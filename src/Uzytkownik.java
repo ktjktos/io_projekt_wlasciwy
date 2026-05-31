@@ -14,17 +14,11 @@
 
 public class Uzytkownik {
 	private String login;
-	//TODO USUNĄŁEM HASŁO Z CREATORA
-	public Uzytkownik(String login) {
-
-	}
-	
-	public boolean zalogujSie(String login, String haslo) {
-	
-	}
-	
-	public boolean zmienHaslo(String login, String haslo, String noweHaslo) {
-	
+	private String haslo;
+	private int id;
+	public Uzytkownik(String login, String haslo) {
+		this.login = login;
+		this.haslo = haslo;
 	}
 
     public String getLogin() {

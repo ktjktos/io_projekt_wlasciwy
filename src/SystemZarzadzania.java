@@ -216,8 +216,10 @@ public class SystemZarzadzania {
 
 
 	// SYSTEMOWE
-
-
+	//TODO BRAKUJE TEGO W UML \/
+	public ArrayList<Kurs> getKursy(){
+		return kursy;
+	}
 
 	public void setZalogowanyUzytkownik(Uzytkownik uzytkownik) {
 		zalogowanyUzytkownik = uzytkownik;

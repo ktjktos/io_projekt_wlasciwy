@@ -19,14 +19,14 @@ public class BazaLogowan {
 			Path path = Paths.get(plik);
 
 			if (!Files.exists(path) || Files.isDirectory(path)) {
-				throw new FileNotFoundException("Plik nie istnieje lub jest katalogiem: " + plik);
+				throw new FileNotFoundException("Plik nie istnieje lub jest katalogiem: " + plik + ". Program nie pozwoli na zalogowanie");
 			}
 
 			this.plik = plik;
 
 		} catch (FileNotFoundException e) {
-			System.err.println("Błąd: " + e.getMessage());
-			this.plik = "-BRAK SCIEZKI- -BLAD KRYTYCZNY-";
+			System.err.println("Blad: " + e.getMessage());
+			this.plik = "Blad krytyczny - program nie ma pliku bazy danych, nie pozwoli na zalogowanie";
 		}
 	}
 
@@ -53,7 +53,7 @@ public class BazaLogowan {
 					String[] czesci = linia.split(";");
 					if (czesci.length == 3) {
 						int poziomUprawnien = Integer.parseInt(czesci[2]);
-						Uzytkownik uzytkownik = stworzUzytkownika(login, poziomUprawnien);
+						Uzytkownik uzytkownik = stworzUzytkownika(login, hexString, poziomUprawnien);
 						return Optional.of(uzytkownik);
 					}
 				}
@@ -64,12 +64,12 @@ public class BazaLogowan {
 		return Optional.empty();
 	}
 
-	private Uzytkownik stworzUzytkownika(String login, int poziomUprawnien) {
+	private Uzytkownik stworzUzytkownika(String login, String haslo, int poziomUprawnien) {
 		return switch (poziomUprawnien) {
-			case 2 -> new Admin(login);
-			case 1 -> new Wykladowca(login);
-			case 0 -> new Student(login);
-			default -> throw new IllegalArgumentException("Nieznany poziom uprawnień: " + poziomUprawnien);
+			case 2 -> new Admin(login, haslo);
+			case 1 -> new Wykladowca(login, haslo);
+			case 0 -> new Student(login, haslo);
+			default -> throw new IllegalArgumentException("Nieznany poziom uprawnien: " + poziomUprawnien);
 		};
 	}
 

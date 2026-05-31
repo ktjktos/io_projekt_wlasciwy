@@ -18,8 +18,8 @@ import java.util.List;
 public class Wykladowca extends Uzytkownik {
 	private ArrayList<Kurs> kursy;
 
-	public Wykladowca(String login) {
-		super(login);
+	public Wykladowca(String login, String haslo) {
+		super(login, haslo);
 	}
 
 	public List<Kurs> getKursy() {
