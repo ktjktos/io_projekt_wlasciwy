@@ -1,4 +1,3 @@
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -9,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public class BazaLogowan {
 	private String plik;
@@ -44,12 +44,13 @@ public class BazaLogowan {
 					String wykladowcaHash = hashujHaslo("wykladowca");
 					String studentHash = hashujHaslo("student");
 
-					this.bazaDanych.add("admin;" + adminHash + ";2");
-					this.bazaDanych.add("wykladowca;" + wykladowcaHash + ";1");
-					this.bazaDanych.add("student;" + studentHash + ";0");
+					
+					this.bazaDanych.add(UUID.randomUUID().toString() + ";admin;" + adminHash + ";2");
+					this.bazaDanych.add(UUID.randomUUID().toString() + ";wykladowca;" + wykladowcaHash + ";1");
+					this.bazaDanych.add(UUID.randomUUID().toString() + ";student;" + studentHash + ";0");
 
 					zapiszDoPliku();
-					System.out.println("Utworzono domyślny plik bazy danych CSV z użytkownikami: admin, wykladowca, student (hasła identyczne z loginami).");
+					System.out.println("Utworzono domyślny plik bazy danych CSV z użytkownikami: admin, wykladowca, student.");
 				} catch (IOException | NoSuchAlgorithmException e) {
 					System.err.println("Blad podczas generowania domyślnej bazy danych: " + e.getMessage());
 				}
@@ -99,18 +100,20 @@ public class BazaLogowan {
 		return hexString.toString();
 	}
 
+	
 	public Optional<Uzytkownik> sprawdzWPliku(String login, String haslo) {
 		try {
 			String hexString = hashujHaslo(haslo);
-			String oczekiwanyPoczatek = login + ";" + hexString + ";";
-
-			// Przeszukiwanie bazy danych wczytanej w pamięci
 			for (String linia : this.bazaDanych) {
-				if (linia.startsWith(oczekiwanyPoczatek)) {
-					String[] czesci = linia.split(";");
-					if (czesci.length == 3) {
-						int poziomUprawnien = Integer.parseInt(czesci[2]);
-						Uzytkownik uzytkownik = stworzUzytkownika(login, hexString, poziomUprawnien);
+				String[] czesci = linia.split(";");
+				if (czesci.length == 4) {
+					String id = czesci[0];
+					String l = czesci[1];
+					String h = czesci[2];
+					int poziomUprawnien = Integer.parseInt(czesci[3]);
+
+					if (l.equals(login) && h.equals(hexString)) {
+						Uzytkownik uzytkownik = stworzUzytkownika(id, login, hexString, poziomUprawnien);
 						return Optional.of(uzytkownik);
 					}
 				}
@@ -121,29 +124,33 @@ public class BazaLogowan {
 		return Optional.empty();
 	}
 
-	private Uzytkownik stworzUzytkownika(String login, String haslo, int poziomUprawnien) {
+	
+	private Uzytkownik stworzUzytkownika(String id, String login, String haslo, int poziomUprawnien) {
 		return switch (poziomUprawnien) {
-			case 2 -> new Admin(login, haslo);
-			case 1 -> new Wykladowca(login, haslo);
-			case 0 -> new Student(login, haslo);
+			case 2 -> new Admin(id, login, haslo);
+			case 1 -> new Wykladowca(id, login, haslo);
+			case 0 -> new Student(id, login, haslo);
 			default -> throw new IllegalArgumentException("Nieznany poziom uprawnien: " + poziomUprawnien);
 		};
 	}
 
-	public boolean zarejestrujUzytkownika(String login, String haslo, int poziomUprawnien) {
+	
+	public boolean zarejestrujUzytkownika(String id, String login, String haslo, int poziomUprawnien) {
 		try {
 			if (!Files.exists(Paths.get(this.plik))) {
 				throw new Exception("brak pliku");
 			}
 
+			
 			for (String linia : this.bazaDanych) {
-				if (linia.startsWith(login + ";")) {
+				String[] czesci = linia.split(";");
+				if (czesci.length >= 2 && czesci[1].equals(login)) {
 					return false;
 				}
 			}
 
 			String hexString = hashujHaslo(haslo);
-			String nowaLinia = login + ";" + hexString + ";" + poziomUprawnien;
+			String nowaLinia = id + ";" + login + ";" + hexString + ";" + poziomUprawnien;
 
 			this.bazaDanych.add(nowaLinia);
 			zapiszDoPliku();
@@ -163,7 +170,8 @@ public class BazaLogowan {
 		boolean usunieto = false;
 
 		for (String linia : this.bazaDanych) {
-			if (linia.startsWith(login + ";")) {
+			String[] czesci = linia.split(";");
+			if (czesci.length >= 2 && czesci[1].equals(login)) {
 				usunieto = true;
 			} else {
 				noweLinie.add(linia);
@@ -192,8 +200,9 @@ public class BazaLogowan {
 
 			for (String linia : this.bazaDanych) {
 				String[] czesci = linia.split(";");
-				if (czesci.length == 3 && czesci[0].equals(login) && czesci[1].equals(stareHex)) {
-					noweLinie.add(login + ";" + noweHex + ";" + czesci[2]);
+				
+				if (czesci.length == 4 && czesci[1].equals(login) && czesci[2].equals(stareHex)) {
+					noweLinie.add(czesci[0] + ";" + login + ";" + noweHex + ";" + czesci[3]);
 					zmieniono = true;
 				} else {
 					noweLinie.add(linia);
@@ -210,5 +219,25 @@ public class BazaLogowan {
 			System.err.println("Blad hashowania: " + e.getMessage());
 		}
 		return false;
+	}
+
+	
+	public List<Uzytkownik> getUzytkownicy() {
+		List<Uzytkownik> lista = new ArrayList<>();
+		for (String linia : this.bazaDanych) {
+			String[] czesci = linia.split(";");
+			if (czesci.length == 4) {
+				try {
+					String id = czesci[0];
+					String login = czesci[1];
+					String hash = czesci[2];
+					int poziom = Integer.parseInt(czesci[3]);
+					lista.add(stworzUzytkownika(id, login, hash, poziom));
+				} catch (IllegalArgumentException e) {
+					System.err.println("Blad podczas odtwarzania uzytkownika: " + e.getMessage());
+				}
+			}
+		}
+		return lista;
 	}
 }

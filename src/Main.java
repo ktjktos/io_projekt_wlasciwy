@@ -1,239 +1,379 @@
 import java.util.Optional;
 import java.util.Scanner;
+import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 
-public void main(String[] args) {
-    BazaLogowan baza = new BazaLogowan("bazaDanych.csv");
-    SystemZarzadzania system = new SystemZarzadzania(baza);
+public class Main {
+    public static void main(String[] args) {
+        BazaLogowan baza = new BazaLogowan("bazaDanych.csv");
+        SystemZarzadzania system = new SystemZarzadzania(baza);
+        Scanner scanner = new Scanner(System.in);
 
-    Scanner scanner = new Scanner(System.in);
-    Optional<Uzytkownik> user = Optional.empty();
-    short proby=0;
-    while (user.isEmpty()) {
-        if (proby>=3){
-            System.out.println("Wykorzystano 3 proby logowania - zamkniecie systemu");
-            return;
-        }
-        System.out.println("Wpisz login oraz haslo");
-        String login,haslo;
-        login = scanner.nextLine().replace(" ", "");
-        haslo = scanner.nextLine().replace(" ", "");
+        System.out.println("=== SYSTEM WSPOMAGAJACY NAUKE ===");
 
-        user = baza.sprawdzWPliku(login,haslo);
-        proby++;
-    }
+        Optional<Uzytkownik> user = Optional.empty();
+        short proby = 0;
 
-    system.setZalogowanyUzytkownik(user.get());
-
-    switch (user.orElse(null)) {
-        case Admin a -> {
-            System.out.println("--- ZALOGOWANO JAKO ADMIN ---");
-            while(user.isPresent()){
-                System.out.println("1 Zarejestruj uzytkownika");
-                System.out.println("2 Usun uzytkownika");
-                System.out.println("3 Wyloguj");
-                System.out.print("Wybierz opcje: ");
-
-                int wybor = scanner.nextInt();
-                scanner.nextLine();
-
-                switch (wybor) {
-                    case 1 -> {
-                        System.out.print("Podaj login: ");
-                        String log = scanner.nextLine();
-                        System.out.print("Podaj haslo: ");
-                        String pas = scanner.nextLine();
-                        System.out.print("Podaj typ (2-Admin, 1-Wykladowca, 0-Student): ");
-                        int typ = scanner.nextInt();
-
-                        system.zarejestrujUzytkownika(log, pas, typ);
-                    }
-                    case 2 -> {
-                        System.out.print("Podaj login uzytkownika do usuniecia: ");
-                        String log = scanner.nextLine();
-                        system.usunUzytkownika(log);
-                    }
-                    case 3 -> {
-                        user = Optional.empty();
-                    }
-                    default -> System.out.println("Niepoprawny wybor.");
-                }
+        while (user.isEmpty()) {
+            if (proby >= 3) {
+                System.out.println("\nBlad: Wykorzystano 3 proby logowania. Zamykanie systemu.");
+                return;
             }
+
+            System.out.println("\n--- PANEL LOGOWANIA (Proba " + (proby + 1) + "/3) ---");
+            String login = wczytajNiepustyTekst(scanner, "Wpisz login: ").replace(" ", "");
+            String haslo = wczytajNiepustyTekst(scanner, "Wpisz haslo: ").replace(" ", "");
+
+            user = baza.sprawdzWPliku(login, haslo);
+            if (user.isEmpty()) {
+                System.out.println("Blad: Niepoprawny login lub haslo. Sprobuj ponownie.");
+            }
+            proby++;
         }
 
-        case Wykladowca w -> {
-            System.out.println("--- ZALOGOWANO JAKO WYKLADOWCA ---");
-            while(user.isPresent()){
-                System.out.println("1 Utworz kurs");
-                System.out.println("2 Wyswietl liste moich kursow");//TODO tutaj problem jak nie ma + opcja powrotu (w student to samo)
-                System.out.println("3 Wyloguj");
+        system.setZalogowanyUzytkownik(user.get());
+        Uzytkownik zalogowany = system.getZalogowanyUzytkownik();
 
-                int wybor = scanner.nextInt();
-                scanner.nextLine();
+        switch (zalogowany) {
+            case Admin a -> {
+                System.out.println("\nZalogowano pomyslnie jako Administrator.");
 
-                switch (wybor){
-                    case 1:
-                        System.out.println("Podaj nazwe kursu");
-                        String nazwa = scanner.nextLine();
-                        System.out.println("Podaj haslo kursu");
-                        String haslo = scanner.nextLine();
-                        system.utworzKurs(nazwa,haslo);
-                        break;
-                    case 2:
-                        System.out.println("~~~lista kursow~~~");
-                        for (Kurs kurs: w.getKursy()) {
-                            System.out.println(kurs.getId() + " " + kurs.getTytul());
-                        }
-                        System.out.println("Podaj id kursu aby wejsc do kursu");
-                        system.wybierzObecnyKurs(scanner.nextInt());
+                while (user.isPresent()) {
+                    wyswietlMenuAdmina();
+                    int wybor = wczytajLiczbe(scanner, "Wybierz opcje: ");
 
-                        int wybor1 = scanner.nextInt();
+                    switch (wybor) {
+                        case 1 -> {
+                            System.out.println("\n--- REJESTRACJA NOWEGO UZYTKOWNIKA ---");
+                            String log = wczytajNiepustyTekst(scanner, "Podaj login: ");
+                            String pas = wczytajNiepustyTekst(scanner, "Podaj haslo: ");
+                            System.out.println("Typ uprawnien (2-Admin, 1-Wykladowca, 0-Student):");
+                            int typ = wczytajLiczbe(scanner, "Wybierz typ (0-2): ");
 
-                        trueloop:
-                        while (true) {
-                            System.out.println("1 Zmień sylabus");
-                            System.out.println("2 Dodaj materiały");
-                            System.out.println("3 Usuń materiały");
-                            System.out.println("4 Sprawdź materiały");
-                            System.out.println("5 Dodaj test");
-                            System.out.println("6 Sprawdź oceny");
-                            System.out.println("7 Sprawdź sylabus");
-
-                            switch (wybor1) {
-                                case 1:
-                                    System.out.println("Wprowadz sciezke do nowego sylabusa.");
-                                    system.zmienSylabus(scanner.nextLine());
-                                    break;
-                                case 2:
-                                    System.out.println("Wprowadz sciezke do materialu ktory chcesz dodac");
-                                    String matsy = scanner.nextLine();
-                                    System.out.println("Wprowadz tytul jaki ma posiadac dodany material");
-                                    String tytul = scanner.nextLine();
-                                    system.dodajMaterialy(matsy,tytul);
-                                    break;
-                                case 3:
-                                    System.out.println("Wprowadz sciezke do materialu ktory chcesz usunac");
-                                    system.usunMaterialyPlik(scanner.nextLine());
-                                    break;
-                                case 4:
-                                    system.sprawdzMaterialy();
-                                    break;
-                                case 5:
-                                    System.out.print("Podaj tytul testu: ");
-                                    String tytul1 = scanner.nextLine();
-                                    System.out.print("Wprowadz sciezke do pliku z testem: ");
-                                    String plik = scanner.nextLine();
-
-                                    LocalDate dataKonca = null;
-                                    while (dataKonca == null) {
-                                        System.out.print("Podaj date zakonczenia (format: RRRR-MM-DD, np. 2026-06-15): ");
-                                        String dataInput = scanner.nextLine();
-
-                                        try {
-                                            dataKonca = LocalDate.parse(dataInput);
-                                        } catch (DateTimeParseException e) {
-                                            System.out.println("Blad: Niepoprawny format daty! Uzyj formatu RRRR-MM-DD.");
-                                        }
-                                    }
-                                    system.dodajTest(plik, tytul1, dataKonca);
-                                    break;
-                                case 6:
-                                    system.sprawdzOceny();
-                                    break;
-                                case 7:
-                                    system.sprawdzSyllabus();
-                                    break;
-                                default:
-                                    break trueloop;
+                            boolean sukces = system.zarejestrujUzytkownika(log, pas, typ);
+                            if (sukces) {
+                                System.out.println("Sukces: Uzytkownik '" + log + "' zostal zarejestrowany.");
+                            } else {
+                                System.out.println("Blad: Rejestracja nie powiodla sie (login moze byc zajety).");
                             }
                         }
-                        break;
-                    case 3:
-                        user = Optional.empty();
-                        break;
+                        case 2 -> {
+                            System.out.println("\n--- USUNIECIE UZYTKOWNIKA ---");
+                            String log = wczytajNiepustyTekst(scanner, "Podaj login uzytkownika do usuniecia: ");
+
+                            boolean sukces = system.usunUzytkownika(log);
+                            if (sukces) {
+                                System.out.println("Sukces: Uzytkownik '" + log + "' zostal usuniety.");
+                            } else {
+                                System.out.println("Blad: Nie udalo sie usunac uzytkownika.");
+                            }
+                        }
+                        case 3 -> {
+                            System.out.println("Wylogowano.");
+                            user = Optional.empty();
+                        }
+                        default -> System.out.println("Niepoprawny wybor! Wybierz liczbe od 1 do 3.");
+                    }
                 }
             }
-        }
 
-        case Student s -> {
-            System.out.println("--- ZALOGOWANO JAKO STUDENT ---");
-            while(user.isPresent()){
-                System.out.println("1 Wyswietl liste dolaczonych? kursow");
-                System.out.println("2 Wyswietl liste wszystkich kursow");
-                System.out.println("3 Wyloguj");
+            case Wykladowca w -> {
+                System.out.println("\nZalogowano pomyslnie jako Wykladowca.");
 
-                int wybor = scanner.nextInt();
-                scanner.nextLine();
+                while (user.isPresent()) {
+                    wyswietlMenuWykladowcy();
+                    int wybor = wczytajLiczbe(scanner, "Wybierz opcje: ");
 
-                switch(wybor){
-                    case 1 -> {
-                        System.out.println("~~~lista kursow~~~");
-                        for (Kurs kurs: s.getKursy()) {
-                            System.out.println(kurs.getId() + " " + kurs.getTytul());
+                    switch (wybor) {
+                        case 1:
+                            System.out.println("\n--- TWORZENIE NOWEGO KURSU ---");
+                            String nazwa = wczytajNiepustyTekst(scanner, "Podaj nazwe kursu: ");
+                            String haslo = wczytajNiepustyTekst(scanner, "Podaj haslo kursu: ");
+                            system.utworzKurs(nazwa, haslo);
+                            break;
+
+                        case 2:
+                            if (w.getKursy().isEmpty()) {
+                                System.out.println("Informacja: Nie prowadzisz zadnych kursow.");
+                                break;
+                            }
+
+                            System.out.println("\n--- MOJE KURSY ---");
+                            for (Kurs kurs : w.getKursy()) {
+                                System.out.println("ID: " + kurs.getId() + " | Tytul: " + kurs.getTytul() + " | Widocznosc: " + (kurs.isWidoczny() ? "WIDOCZNY" : "NIEWIDOCZNY"));
+                            }
+                            String wybraneId = wczytajNiepustyTekst(scanner, "Podaj ID kursu, aby do niego wejsc: ").replace(" ", "");
+
+                            boolean udaloSieWejsc = system.wybierzObecnyKurs(wybraneId);
+                            if (udaloSieWejsc) {
+                                trueloop:
+                                while (true) {
+                                    wyswietlPanelZarzadzaniaKursem();
+                                    int wybor1 = wczytajLiczbe(scanner, "Wybierz funkcje: ");
+
+                                    switch (wybor1) {
+                                        case 1:
+                                            String sylabusWybor = wczytajNiepustyTekst(scanner, "Podaj sciezke do pliku z nowym sylabusem: ");
+                                            system.zmienSylabus(sylabusWybor);
+                                            break;
+                                        case 2:
+                                            String matsy = wczytajNiepustyTekst(scanner, "Podaj sciezke do pliku materialu: ");
+                                            String tytul = wczytajNiepustyTekst(scanner, "Podaj tytul materialu: ");
+                                            system.dodajMaterialy(matsy, tytul);
+                                            break;
+                                        case 3:
+                                            String doUsuniecia = wczytajNiepustyTekst(scanner, "Podaj tytul materialu do usuniecia: ");
+                                            system.usunMaterialyPlik(doUsuniecia);
+                                            break;
+                                        case 4:
+                                            system.sprawdzMaterialy();
+                                            break;
+                                        case 5:
+                                            String plik = wczytajNiepustyTekst(scanner, "Podaj sciezke do pliku z testem: ");
+                                            String tytul1 = wczytajNiepustyTekst(scanner, "Podaj tytul testu: ");
+                                            LocalDate dataKonca = wczytajDate(scanner, "Podaj date zakonczenia (RRRR-MM-DD): ");
+
+                                            system.dodajTest(plik, tytul1, dataKonca);
+                                            break;
+                                        case 6:
+                                            system.sprawdzOceny();
+                                            break;
+                                        case 7:
+                                            
+                                            System.out.println("\n--- OCENIANIE ROZWIAZANIA ---");
+                                            String testOceniany = wczytajNiepustyTekst(scanner, "Podaj tytul testu: ");
+                                            String studentLogin = wczytajNiepustyTekst(scanner, "Podaj login studenta: ");
+
+                                            boolean podgladOk = system.wyswietlPodgladDoOceny(testOceniany, studentLogin);
+                                            if (podgladOk) {
+                                                float ocenaFloat = wczytajOcene(scanner, "Wystaw ocene (np. 4.5): ");
+                                                system.ocenRozwiazanieTestu(testOceniany, studentLogin, ocenaFloat);
+                                            }
+                                            break;
+                                        case 8:
+                                            system.zmienWidocznoscObecnegoKursu();
+                                            break;
+                                        case 9:
+                                            system.sprawdzSylabus();
+                                            break;
+                                        default:
+                                            System.out.println("Powrot do menu glownego.");
+                                            break trueloop;
+                                    }
+                                }
+                            }
+                            break;
+
+                        case 3:
+                            System.out.println("Wylogowano.");
+                            user = Optional.empty();
+                            break;
+
+                        default:
+                            System.out.println("Niepoprawny wybor!");
+                    }
+                }
+            }
+
+            case Student s -> {
+                System.out.println("\nZalogowano pomyslnie jako Student.");
+
+                while (user.isPresent()) {
+                    wyswietlMenuStudenta();
+                    int wybor = wczytajLiczbe(scanner, "Wybierz opcje: ");
+
+                    switch (wybor) {
+                        case 1 -> {
+                            if (s.getKursy().isEmpty()) {
+                                System.out.println("Informacja: Nie nalezysz do zadnego kursu. Dolacz do kursu (opcja 2).");
+                                break;
+                            }
+
+                            System.out.println("\n--- MOJE KURSY ---");
+                            for (Kurs kurs : s.getKursy()) {
+                                System.out.println("ID: " + kurs.getId() + " | Tytul: " + kurs.getTytul());
+                            }
+                            String wybraneId = wczytajNiepustyTekst(scanner, "Podaj ID kursu, ktory chcesz otworzyc: ").replace(" ", "");
+
+                            boolean udaloSieWejsc = system.wybierzObecnyKurs(wybraneId);
+
+                            if (udaloSieWejsc) {
+                                trueloop:
+                                while (true) {
+                                    wyswietlPanelStudentaKursu();
+                                    int wybor2 = wczytajLiczbe(scanner, "Wybierz opcje: ");
+
+                                    switch (wybor2) {
+                                        case 1:
+                                            system.sprawdzSylabus();
+                                            break;
+                                        case 2:
+                                            system.sprawdzMaterialy();
+                                            break;
+                                        case 3:
+                                            system.sprawdzTesty();
+                                            break;
+                                        case 4:
+                                            System.out.println("\nDostepne testy w tym kursie:");
+                                            system.sprawdzTesty();
+                                            String tytulWyswietlany = wczytajNiepustyTekst(scanner, "Podaj tytul testu, którego tresc chcesz wyswietlic: ");
+                                            system.wyswietlZawartoscTestu(tytulWyswietlany);
+                                            break;
+                                        case 5:
+                                            System.out.println("\nDostepne testy w tym kursie:");
+                                            system.sprawdzTesty();
+                                            String tytulTestu = wczytajNiepustyTekst(scanner, "\nPodaj tytul testu do rozwiazania: ");
+                                            String odp = wczytajNiepustyTekst(scanner, "Wpisz swoje odpowiedzi: ");
+
+                                            system.wyslijRozwiazanieDoTestu(tytulTestu, odp);
+                                            break;
+                                        case 6:
+                                            String tytulOcena = wczytajNiepustyTekst(scanner, "Wpisz tytul testu, aby zobaczyc ocene: ");
+                                            system.sprawdzOceneTestu(tytulOcena);
+                                            break;
+                                        default:
+                                            System.out.println("Wyjscie z kursu.");
+                                            break trueloop;
+                                    }
+                                }
+                            }
                         }
-                        System.out.println("Podaj tytul aby otworzyc");
-                        String tytul = scanner.nextLine();
+                        case 2 -> {
+                            System.out.println("\n--- DOSTEPNE KURSY ---");
+                            ArrayList<Kurs> temp = system.getKursy();
+                            boolean saNoweKursy = false;
 
-                        boolean znalezionoKurs = false;
-                        for (Kurs kurs: s.getKursy()) {
-                            znalezionoKurs = kurs.getTytul().equals(tytul);
-                            if (znalezionoKurs) break;
-                        }
-
-                        if (znalezionoKurs) {
-
-                            trueloop:
-                            while(true) {
-                                System.out.println("1 Wyślij rozwiązanie do testu");
-                                System.out.println("2 Sprawdź ocenę testu");
-                                System.out.println("3 Sprawdź materiały");
-                                int wybor2 = scanner.nextInt();
-                                switch (wybor2) {
-                                    case 1:
-                                        System.out.println("Wprowadz tytul testu");
-                                        String tytul2 = scanner.nextLine(); // TODO: wyswietlic test xd
-                                        System.out.println("Wprowadz odpowiedzi w formacie \"A B C...\"");
-                                        String odp = scanner.nextLine();
-                                        system.wyslijRozwiazanieDoTestu(tytul2,odp);
-                                        break;
-                                    case 2:
-                                        System.out.println("Wprowadz tytul testu");
-                                        String tytul3 = scanner.nextLine();
-                                        system.sprawdzOceneTestu(tytul3);
-                                        break;
-                                    case 3:
-                                        system.sprawdzMaterialy();
-                                        break;
-                                    default:
-                                        break trueloop;
+                            for (Kurs k : temp) {
+                                if (k.isWidoczny() && !s.getKursy().contains(k)) {
+                                    System.out.println("ID: " + k.getId() + " | Tytul: " + k.getTytul());
+                                    saNoweKursy = true;
                                 }
                             }
 
-                        } else {
-                            System.out.println("Nie znaleziono podanego kursu.");
-                        }
-                    }
-                    case 2 -> {
-                        System.out.println("~~~lista kursow~~~");
-                        ArrayList<Kurs> temp = system.getKursy();
-                        for (Kurs k : temp) {
-                            if (!s.getKursy().contains(k)) {
-                                System.out.println("ID: "+k.getId()+" Tytul: "+k.getTytul());
+                            if (!saNoweKursy) {
+                                System.out.println("Brak nowych, widocznych kursow w systemie.");
+                                break;
                             }
+
+                            String idDoDolaczenia = wczytajNiepustyTekst(scanner, "Podaj ID kursu, do ktorego chcesz dolaczyc: ").replace(" ", "");
+                            String hasloKursu = wczytajNiepustyTekst(scanner, "Podaj haslo zabezpieczajace kurs: ");
+
+                            system.dolaczDoKursu(idDoDolaczenia, hasloKursu);
                         }
-                        System.out.println("Podaj tytul i haslo aby dolaczyc");
-                        int idDoDolaczenia = scanner.nextInt();
-                        system.dolaczDoKursu(idDoDolaczenia);
-                    }
-                    case 3 -> {
-                        user = Optional.empty();
+                        case 3 -> {
+                            System.out.println("Wylogowano.");
+                            user = Optional.empty();
+                        }
+                        default -> System.out.println("Niepoprawny wybor!");
                     }
                 }
             }
-        }
 
-        case null, default -> {
-            System.out.println("Nieznany typ użytkownika - BŁĄD");
+            case null, default -> {
+                System.out.println("Blad krytyczny: Nieznany typ uzytkownika.");
+            }
+        }
+    }
+
+    
+
+    private static void wyswietlMenuAdmina() {
+        System.out.println("\n--- MENU ADMINISTRATORA ---");
+        System.out.println("1. Zarejestruj nowego uzytkownika");
+        System.out.println("2. Usun uzytkownika");
+        System.out.println("3. Wyloguj");
+    }
+
+    private static void wyswietlMenuWykladowcy() {
+        System.out.println("\n--- MENU WYKLADOWCY ---");
+        System.out.println("1. Utworz nowy kurs");
+        System.out.println("2. Wybierz i zarzadzaj kursem");
+        System.out.println("3. Wyloguj");
+    }
+
+    private static void wyswietlPanelZarzadzaniaKursem() {
+        System.out.println("\n--- PANEL ZARZADZANIA KURSEM ---");
+        System.out.println("1. Zmien sylabus kursu (z pliku)");
+        System.out.println("2. Dodaj materialy");
+        System.out.println("3. Usun materialy");
+        System.out.println("4. Wyswietl liste materialow");
+        System.out.println("5. Dodaj test");
+        System.out.println("6. Sprawdz oceny i odpowiedzi");
+        System.out.println("7. Ocen rozwiazanie testu");
+        System.out.println("8. Zmien widocznosc kursu");
+        System.out.println("9. Wyswietl sylabus");
+        System.out.println("10. Wyjdz do menu glownego");
+    }
+
+    private static void wyswietlMenuStudenta() {
+        System.out.println("\n--- MENU STUDENTA ---");
+        System.out.println("1. Wejdz do swojego kursu");
+        System.out.println("2. Wyswietl dostepne kursy i dolacz");
+        System.out.println("3. Wyloguj");
+    }
+
+    private static void wyswietlPanelStudentaKursu() {
+        System.out.println("\n--- MENU KURSU ---");
+        System.out.println("1. Wyswietl sylabus");
+        System.out.println("2. Wyswietl materialy");
+        System.out.println("3. Sprawdz dostepne testy");
+        System.out.println("4. Wyswietl tresc wybranego testu");
+        System.out.println("5. Przeslij rozwiazanie testu");
+        System.out.println("6. Sprawdz swoja ocene");
+        System.out.println("7. Wyjdz z kursu");
+    }
+
+    private static int wczytajLiczbe(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            try {
+                return Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Blad: Podana wartosc nie jest poprawna liczba! Sprobuj ponownie.");
+            }
+        }
+    }
+
+    private static LocalDate wczytajDate(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            try {
+                return LocalDate.parse(input);
+            } catch (DateTimeParseException e) {
+                System.out.println("Blad: Niepoprawny format daty! Uzyj formatu RRRR-MM-DD.");
+            }
+        }
+    }
+
+    private static String wczytajNiepustyTekst(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                System.out.println("Blad: Wartosc nie moze byc pusta! Sprobuj ponownie.");
+            } else {
+                return input;
+            }
+        }
+    }
+
+    
+    private static float wczytajOcene(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim().replace(",", ".");
+            if (input.isEmpty()) {
+                System.out.println("Blad: Ocena nie moze byc pusta!");
+                continue;
+            }
+            try {
+                return Float.parseFloat(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Blad: Podana ocena nie jest poprawna liczba! Sprobuj ponownie (np. 4.5).");
+            }
         }
     }
 }

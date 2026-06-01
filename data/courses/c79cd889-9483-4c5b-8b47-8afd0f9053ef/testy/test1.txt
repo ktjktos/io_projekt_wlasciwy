@@ -1,0 +1,15 @@
+testjeden
+2026-06-01
+2067-12-12
+false
+---pytania---
+1. ile to jest 2+2?
+A. 67 B. 4 C. -4 D. nie wiem
+2. czy typ String przechowuje napis?
+A. tak B. nie C. zdecydowanie tak D. moze
+3. czy student lubi sie uczyc?
+A. troszke B. oczywiście C. nie D. mhm
+---oceny---
+student;2.0
+---rozwiazania---
+student;A,B,D
