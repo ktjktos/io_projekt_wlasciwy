@@ -132,10 +132,101 @@ public class SystemZarzadzania {
 			return false;
 		}
 
+		
+		Uzytkownik doUsuniecia = null;
+		for (Uzytkownik u : uzytkownicy) {
+			if (u.getLogin().equals(login)) {
+				doUsuniecia = u;
+				break;
+			}
+		}
+
+		if (doUsuniecia == null) {
+			System.out.println("Blad: Nie znaleziono uzytkownika o loginie: " + login);
+			return false;
+		}
+
+		String userId = doUsuniecia.getId();
+
+		
 		boolean usunietyZPliku = bazaLogowan.usunUzytkownika(login);
 
 		if (usunietyZPliku) {
-			uzytkownicy.removeIf(u -> u.getLogin().equals(login));
+			
+			uzytkownicy.remove(doUsuniecia);
+
+			
+			for (Kurs kurs : kursy) {
+				if (kurs.getUzytkownicy().contains(userId)) {
+					kurs.getUzytkownicy().remove(userId);
+
+					
+					//TODO TU COŚ GŁUPIEGO XD
+					Path uzytkownicyFile = Paths.get(this.sciezkaKursow, kurs.getId(), "uzytkownicy.txt");
+					try {
+						Files.write(uzytkownicyFile, kurs.getUzytkownicy(), StandardCharsets.UTF_8);
+					} catch (IOException e) {
+						System.err.println("Blad zapisu pliku uzytkownikow dla kursu " + kurs.getId() + ": " + e.getMessage());
+					}
+				}
+
+				
+				for (Test test : kurs.getTesty()) {
+					boolean zmianaWTestach = false;
+
+					if (test.getOceny().containsKey(login)) {
+						test.getOceny().remove(login);
+						zmianaWTestach = true;
+					}
+
+					if (test.getRozwiazania().containsKey(login)) {
+						test.getRozwiazania().remove(login);
+						zmianaWTestach = true;
+					}
+
+					
+					
+					if (zmianaWTestach) {
+						Path testPath = Paths.get(test.getPlik());
+						if (Files.exists(testPath)) {
+							try {
+								List<String> linie = Files.readAllLines(testPath, StandardCharsets.UTF_8);
+								List<String> zaktualizowaneLinie = new ArrayList<>();
+								String obecnyTryb = "";
+
+								for (String linia : linie) {
+									String trimmed = linia.trim();
+									
+									if (trimmed.equals("---pytania---")) {
+										obecnyTryb = "PYTANIA";
+										zaktualizowaneLinie.add(linia);
+									} else if (trimmed.equals("---oceny---")) {
+										obecnyTryb = "OCENY";
+										zaktualizowaneLinie.add(linia);
+									} else if (trimmed.equals("---rozwiazania---")) {
+										obecnyTryb = "ROZWIAZANIA";
+										zaktualizowaneLinie.add(linia);
+									} else {
+										
+										if (obecnyTryb.equals("OCENY") || obecnyTryb.equals("ROZWIAZANIA")) {
+											String[] tokeny = trimmed.split(";");
+											if (tokeny.length >= 1 && tokeny[0].equals(login)) {
+												
+												continue;
+											}
+										}
+										zaktualizowaneLinie.add(linia);
+									}
+								}
+								
+								Files.write(testPath, zaktualizowaneLinie, StandardCharsets.UTF_8);
+							} catch (IOException e) {
+								System.err.println("Blad modyfikacji pliku testu " + test.getPlik() + ": " + e.getMessage());
+							}
+						}
+					}
+				}
+			}
 			return true;
 		}
 		return false;
