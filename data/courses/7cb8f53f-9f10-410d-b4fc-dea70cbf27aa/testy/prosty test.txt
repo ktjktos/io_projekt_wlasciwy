@@ -1,0 +1,16 @@
+test5pytan
+2026-06-02
+2026-12-30
+false
+---pytania---
+Zadanie 1: Oblicz wynik dzialania: 2 + 2 * 2
+Zadanie 2: Ile wynosi pierwiastek kwadratowy z liczby 81?
+Zadanie 3: Rozwiaz rownanie: 2x - 10 = 0. Podaj wartosc x.
+Zadanie 4: Czy trojkat o bokach 3, 4, 5 jest prostokatny?
+Zadanie 5: Jaka jest powierzania kwadratu o boku dlugosci 5 cm?
+---oceny---
+s1;5.0
+s2;3.0
+---rozwiazania---
+s1;6 | 9 | 5 | y | 25
+s2;8 9 20 tak 25
