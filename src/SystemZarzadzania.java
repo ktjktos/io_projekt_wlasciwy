@@ -347,6 +347,7 @@ public class SystemZarzadzania {
 
 	public void wyslijRozwiazanieDoTestu(String tytulTestu, String odp) {
 		if (zalogowanyUzytkownik instanceof Student && obecnyKurs != null) {
+			odp=odp.replace(';','|');
 			obecnyKurs.rozwiazTest(tytulTestu, zalogowanyUzytkownik.getLogin(), odp);
 			System.out.println("Rozwiazanie testu zostalo wyslane.");
 		}
