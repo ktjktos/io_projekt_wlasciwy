@@ -1,17 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-import java.util.UUID;
-
 public class Uzytkownik {
 	private String login;
 	private String haslo;

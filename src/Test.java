@@ -18,12 +18,6 @@ public class Test {
 	private HashMap<String, String> rozwiazania; 
 	private boolean widocznosc;
 
-	
-	public Test(String plik, String tytul, LocalDate dataKonca) {
-		this(plik, tytul, dataKonca, new ArrayList<>());
-	}
-
-	
 	public Test(String plik, String tytul, LocalDate dataKonca, List<String> pytania) {
 		this.plik = plik;
 		this.tytul = tytul;
@@ -41,7 +35,7 @@ public class Test {
 		this.oceny = new HashMap<>();
 		this.rozwiazania = new HashMap<>();
 		this.pytania = new ArrayList<>();
-		wczytajNaDysk(); 
+		odczytajZDysku();
 	}
 
 	
@@ -79,7 +73,7 @@ public class Test {
 	}
 
 	
-	private void wczytajNaDysk() {
+	private void odczytajZDysku() {
 		try {
 			Path path = Paths.get(this.plik);
 			if (!Files.exists(path)) {
